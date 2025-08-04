@@ -1,0 +1,7 @@
+{
+  "Azure": {
+    "ClientId": "your-client-id",
+    "ClientSecret": "your-client-secret",
+    "TenantId": "your-tenant-id"
+  }
+}

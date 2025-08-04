@@ -1,0 +1,9 @@
+Code Review:
+
+Positive Points: 
+- This code makes use of the HttpClient class to make HTTP requests, which is the recommended approach for making HTTP requests in .NET applications.
+- The ReadContentAs() extension method is used to deserialize the response into a CustomerDetails object.
+
+Improvement Areas: 
+- The code could be improved by adding additional checks to ensure that the response is valid before deserializing it.
+- The code could be improved by adding additional logging to log the response and any errors that may occur during the request.

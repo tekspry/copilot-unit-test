@@ -1,0 +1,13 @@
+
+using System.Threading.Tasks;
+
+namespace ecom.notification.infrastructure.Services.Product
+{
+    public interface IProductService
+    {
+        Task<notification.domain.Product.Product> GetProductAsync(string productId);
+        Task<notification.domain.Product.Product> AddProductAsync(notification.domain.Product.Product product);
+        Task<notification.domain.Product.Product> UpdateProductAsync(notification.domain.Product.Product product);
+        Task<bool> DeleteProductAsync(string productId);
+    }
+}

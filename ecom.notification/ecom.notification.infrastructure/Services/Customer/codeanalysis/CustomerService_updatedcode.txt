@@ -1,0 +1,33 @@
+
+using ecom.notification.domain.Customer;
+using ecom.notification.infrastructure.Extensions;
+
+namespace ecom.notification.infrastructure.Services.Customer
+{
+    public class CustomerService : ICustomerService
+    {
+        private readonly HttpClient client;
+        public CustomerService(HttpClient client)
+        {
+            this.client = client ?? throw new ArgumentNullException(nameof(client));
+        }
+        public async Task<CustomerDetails> GetCustomerAsync(string customerId)
+        {
+            if (string.IsNullOrWhiteSpace(customerId))
+            {
+                throw new ArgumentNullException(nameof(customerId));
+            }
+            
+            var response = await client.GetAsync($"customer/{customerId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.ReadContentAs<CustomerDetails>();
+            }
+            else 
+            {
+                throw new Exception($"Failed to get customer details for id {customerId}. Response status code: {response.StatusCode}");
+            }
+        }
+    }
+}

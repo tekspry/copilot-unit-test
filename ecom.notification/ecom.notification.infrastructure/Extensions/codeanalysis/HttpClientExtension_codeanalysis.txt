@@ -1,0 +1,11 @@
+Code Review:  
+Positive Points: 
+1. The code is using the .Net HttpClient library which is the recommended way of making HTTP requests in .Net applications. 
+2. The code is using the System.Text.Json library to serialize and deserialize JSON data. 
+3. The code is using the MediaTypeHeaderValue class to set the Content-Type header of the request. 
+4. The code is using the IsSuccessStatusCode property to check if the response was successful and throw an exception if not. 
+
+Improvement Areas: 
+1. The code could be improved by using the HttpRequestMessage class to create the request instead of using the StringContent class. 
+2. The code could be improved by using the HttpResponseMessage class to read the response instead of using the ReadAsStringAsync method. 
+3. The code could be improved by using a more descriptive name for the ReadContentAs method to make it clear what it does.

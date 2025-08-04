@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapr.Actors.AspNetCore" Version="1.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ecom.customer\ecom.customer.domain\ecom.customer.domain.csproj" />
+    <ProjectReference Include="..\ecom.notification.domain\ecom.notification.domain.csproj" />
+  </ItemGroup>
+
+</Project>

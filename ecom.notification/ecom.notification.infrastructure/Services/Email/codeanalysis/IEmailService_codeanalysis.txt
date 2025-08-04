@@ -1,0 +1,9 @@
+Positive Points: 
+- The code is well organized and clearly namespaced. 
+- IEmailService interface is defined to send emails. 
+- The SendEmail method is defined to accept OrderForNotfication as a parameter. 
+ 
+Improvement Areas: 
+- The interface could be more generic and accept any type of Notification object rather than OrderForNotfication. 
+- The SendEmail method could be more descriptive and provide more information about what it does. 
+- The interface could be split up into multiple interfaces to better organize the code and make it more maintainable.

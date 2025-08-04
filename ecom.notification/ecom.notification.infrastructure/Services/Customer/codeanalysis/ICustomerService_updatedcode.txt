@@ -1,0 +1,13 @@
+using ecom.notification.domain.Customer;
+using System.Threading.Tasks;
+
+namespace ecom.notification.infrastructure.Services.Customer
+{
+    public interface ICustomerService
+    {
+        Task<CustomerDetails> GetCustomerAsync(string customerId);
+        Task<bool> CreateCustomerAsync(CustomerDetails customerDetails);
+        Task<bool> UpdateCustomerAsync(string customerId, CustomerDetails customerDetails);
+        Task<bool> DeleteCustomerAsync(string customerId);
+    }
+}
