@@ -163,62 +163,72 @@ namespace ecom.ProductService.Controllers
         }
 
         [HttpPost("{id}/rating")]
-        [AllowAnonymous]
-        public async Task<ActionResult<ProductRatingResponse>> AddRating(string id, [FromBody] AddRatingRequest ratingRequest)
-        {
-            if (string.IsNullOrEmpty(id))
-            {
-                return BadRequest("Product ID is required");
-            }
+		[AllowAnonymous] // controller has Authorize at class level; method-level authorize is acceptable
+		public async Task<ActionResult<ProductRatingResponse>> AddRating(string id, [FromBody] AddRatingRequest ratingRequest)
+		{
+			if (string.IsNullOrWhiteSpace(id))
+			{
+				return BadRequest("Product ID is required");
+			}
 
-            if (ratingRequest == null)
-            {
-                return BadRequest("Rating request cannot be null");
-            }
+			if (ratingRequest == null)
+			{
+				return BadRequest("Rating request cannot be null");
+			}
 
-            if (ratingRequest.Rating < 1 || ratingRequest.Rating > 5)
-            {
-                return BadRequest("Rating must be between 1 and 5");
-            }
+			if (ratingRequest.Rating < 1 || ratingRequest.Rating > 5)
+			{
+				return BadRequest("Rating must be between 1 and 5");
+			}
 
-            _logger.LogInformation($"Adding rating for product: {id}");
-            try
-            {
-                var result = await _productApplication.AddRatingAsync(id, ratingRequest);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning($"Product not found: {ex.Message}");
-                return NotFound();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error adding rating: {ex.Message}");
-                return BadRequest(ex.Message);
-            }
-        }
+			_logger.LogInformation($"Adding rating for product: {id}");
+			try
+			{
+				var result = await _productApplication.AddRatingAsync(id, ratingRequest);
+				return Ok(result);
+			}
+			catch (InvalidOperationException ex)
+			{
+				_logger.LogWarning($"Invalid operation while adding rating: {ex.Message}");
+				// duplicate rating -> BadRequest with message
+				return BadRequest(ex.Message);
+			}
+			catch (KeyNotFoundException)
+			{
+				// product not found -> NotFound
+				return NotFound();
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError($"Error adding rating: {ex.Message}");
+				return BadRequest(ex.Message);
+			}
+		}
 
-        [HttpGet("{id}/ratings")]
-        [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<ProductRatingResponse>>> GetRatings(string id)
-        {
-            if (string.IsNullOrEmpty(id))
-            {
-                return BadRequest("Product ID is required");
-            }
+		[HttpGet("{id}/ratings")]
+		[AllowAnonymous]
+		public async Task<ActionResult<IEnumerable<ProductRatingResponse>>> GetRatings(string id)
+		{
+			if (string.IsNullOrWhiteSpace(id))
+			{
+				return BadRequest("Product ID is required");
+			}
 
-            _logger.LogInformation($"Getting ratings for product: {id}");
-            try
-            {
-                var ratings = await _productApplication.GetRatingsAsync(id);
-                return Ok(ratings);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error getting ratings: {ex.Message}");
-                return BadRequest(ex.Message);
-            }
-        }
+			_logger.LogInformation($"Getting ratings for product: {id}");
+			try
+			{
+				var ratings = await _productApplication.GetRatingsAsync(id);
+				return Ok(ratings);
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound();
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError($"Error getting ratings: {ex.Message}");
+				return BadRequest(ex.Message);
+			}
+		}
     }
 }

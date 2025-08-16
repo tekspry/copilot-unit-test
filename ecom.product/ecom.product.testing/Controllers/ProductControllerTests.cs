@@ -614,6 +614,208 @@ namespace ecom.product.testing.Controllers
             // Assert
             attribute.ShouldNotBeNull("GetRatings should allow anonymous access");
         }
+
+        [Fact]
+        public async Task AddRating_WithValidRequest_ReturnsOkObjectResult_WithProductRatingResponse()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var request = new AddRatingRequest { Rating = 5, Comment = "Excellent" };
+            var expectedResponse = new ProductRatingResponse
+            {
+                Id = Guid.NewGuid().ToString(),
+                ProductId = productId,
+                UserId = "user-123",
+                Rating = 5,
+                Comment = "Excellent",
+                CreatedDate = DateTime.UtcNow
+            };
+
+            _mockProductApplication.Setup(x => x.AddRatingAsync(productId, request))
+                .ReturnsAsync(expectedResponse);
+
+            // Act
+            var result = await _controller.AddRating(productId, request);
+
+            // Assert
+            var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
+            var value = okResult.Value.ShouldBeOfType<ProductRatingResponse>();
+            value.Id.ShouldBe(expectedResponse.Id);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(6)]
+        public async Task AddRating_WithOutOfRangeRating_ReturnsBadRequest(int invalidRating)
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var request = new AddRatingRequest { Rating = invalidRating, Comment = "Bad" };
+
+            // Act
+            var result = await _controller.AddRating(productId, request);
+
+            // Assert
+            var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+            badRequest.Value.ShouldBe("Rating must be between 1 and 5");
+        }
+
+        [Fact]
+        public async Task AddRating_WithNullRequest_ReturnsBadRequest()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+
+            // Act
+            var result = await _controller.Add(product: null); // keep existing Add null test; but call AddRating below
+            // We want to exercise AddRating null request
+            var ratingResult = await _controller.AddRating(productId, null);
+
+            // Assert
+            var badRequest = ratingResult.Result.ShouldBeOfType<BadRequestObjectResult>();
+            badRequest.Value.ShouldBe("Rating request cannot be null");
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public async Task AddRating_WithInvalidProductId_ReturnsBadRequest(string invalidProductId)
+        {
+            // Arrange
+            var request = new AddRatingRequest { Rating = 4, Comment = "Nice" };
+
+            // Act
+            var result = await _controller.AddRating(invalidProductId, request);
+
+            // Assert
+            var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+            badRequest.Value.ShouldBe("Product ID is required");
+        }
+
+        [Fact]
+        public async Task AddRating_WhenUserAlreadyRated_ReturnsBadRequestWithMessage()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var request = new AddRatingRequest { Rating = 4, Comment = "Repeat" };
+            var errorMessage = "User has already rated this product";
+            _mockProductApplication.Setup(x => x.AddRatingAsync(productId, request))
+                .ThrowsAsync(new InvalidOperationException(errorMessage));
+
+            // Act
+            var result = await _controller.AddRating(productId, request);
+
+            // Assert
+            var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+            badRequest.Value.ShouldBe(errorMessage);
+        }
+
+        [Fact]
+        public async Task AddRating_ProductNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var request = new AddRatingRequest { Rating = 3, Comment = "Ok" };
+            _mockProductApplication.Setup(x => x.AddRatingAsync(productId, request))
+                .ThrowsAsync(new KeyNotFoundException("Product not found"));
+
+            // Act
+            var result = await _controller.AddRating(productId, request);
+
+            // Assert
+            result.Result.ShouldBeOfType<NotFoundResult>();
+        }
+
+        [Fact]
+        public async Task AddRating_WhenUnhandledException_ReturnsBadRequestWithMessage()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var request = new AddRatingRequest { Rating = 5, Comment = "Err" };
+            var errorMessage = "backend error";
+            _mockProductApplication.Setup(x => x.AddRatingAsync(productId, request))
+                .ThrowsAsync(new Exception(errorMessage));
+
+            // Act
+            var result = await _controller.AddRating(productId, request);
+
+            // Assert
+            var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+            badRequest.Value.ShouldBe(errorMessage);
+        }
+
+        [Fact]
+        public async Task GetRatings_WithValidProductId_ReturnsOkObjectResult_WithListOfRatings()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var ratings = new List<ProductRatingResponse>
+            {
+                new ProductRatingResponse { Id = Guid.NewGuid().ToString(), ProductId = productId, UserId = "u1", Rating = 5, Comment = "Great", CreatedDate = DateTime.UtcNow },
+                new ProductRatingResponse { Id = Guid.NewGuid().ToString(), ProductId = productId, UserId = "u2", Rating = 4, Comment = "Good", CreatedDate = DateTime.UtcNow }
+            };
+
+            _mockProductApplication.Setup(x => x.GetRatingsAsync(productId))
+                .ReturnsAsync(ratings);
+
+            // Act
+            var result = await _controller.GetRatings(productId);
+
+            // Assert
+            var ok = result.Result.ShouldBeOfType<OkObjectResult>();
+            var value = ok.Value.ShouldBeAssignableTo<IEnumerable<ProductRatingResponse>>();
+            value.Count().ShouldBe(2);
+        }
+
+        [Fact]
+        public async Task GetRatings_WithNoRatings_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            var ratings = new List<ProductRatingResponse>();
+            _mockProductApplication.Setup(x => x.GetRatingsAsync(productId))
+                .ReturnsAsync(ratings);
+
+            // Act
+            var result = await _controller.GetRatings(productId);
+
+            // Assert
+            var ok = result.Result.ShouldBeOfType<OkObjectResult>();
+            var value = ok.Value.ShouldBeAssignableTo<IEnumerable<ProductRatingResponse>>();
+            value.Count().ShouldBe(0);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public async Task GetRatings_WithInvalidProductId_ReturnsBadRequest(string invalidProductId)
+        {
+            // Act
+            var result = await _controller.GetRatings(invalidProductId);
+
+            // Assert
+            var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
+            badRequest.Value.ShouldBe("Product ID is required");
+        }
+
+        [Fact]
+        public async Task GetRatings_ProductNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            var productId = Guid.NewGuid().ToString();
+            _mockProductApplication.Setup(x => x.GetRatingsAsync(productId))
+                .ThrowsAsync(new KeyNotFoundException("Product not found"));
+
+            // Act
+            var result = await _controller.GetRatings(productId);
+
+            // Assert
+            result.Result.ShouldBeOfType<NotFoundResult>();
+        }
+
+        // test-only stubs are intentionally NOT added here to avoid conflicts; keep tests reflection-based to compile without domain types.
     }
 }
 
